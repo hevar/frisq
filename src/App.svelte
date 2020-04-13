@@ -9,6 +9,7 @@
     let cleaningDuration = 0;
     let showDone = false;
     let previousDurations = [];
+    let isCleaning = false;
 
     beforeUpdate(() => {
         room = room
@@ -111,6 +112,7 @@
         }
     }
     const stopCleaning = () => {
+        isCleaning = false;
         clearInterval(interval)
     }
 
@@ -142,11 +144,26 @@
         }
     }
 
+    const reset = () => {
+        stopCleaning()
+        room = createRoom(10, 10);
+        robotPos = getStartingPosition()
+        dirtySquares = 100
+        showDone = false;
+
+    }
+
     const startCleaning = (e, speedChange = false) => {
         // doesnt support stopping the cleaning process.
+
         if (!speedChange) {
             startTime = Date.now();
         }
+
+        if (dirtySquares === 0) {
+            reset()
+        }
+        isCleaning = true;
         showDone = false;
 
         interval = setInterval(() => {
@@ -161,13 +178,7 @@
         }, speed);
     }
 
-    const reset = () => {
-        stopCleaning()
-        room = createRoom(10, 10);
-        robotPos = getStartingPosition()
-        dirtySquares = 100
-        showDone = false;
-    }
+
 
     onDestroy(() => {
         stopCleaning()
@@ -178,8 +189,8 @@
 
 <main>
     <div class="controls">
-        <button on:click={startCleaning}>Start</button>
-        <button on:click={stopCleaning}>Stop</button>
+        <button disabled={isCleaning} on:click={startCleaning}>Start</button>
+        <button disabled={!isCleaning} on:click={stopCleaning}>Stop</button>
         <button on:click={reset}>Reset</button>
         <label>
             <h3>Speed: {speed}ms</h3>
@@ -201,8 +212,8 @@
 
     {#if previousDurations}
         <div class="prev-duration-wrapper">
-            <h3>Previous</h3>
-            {#each previousDurations.slice(0, 10) as item}
+            <h3>Last 10</h3>
+            {#each previousDurations.slice(Math.max(previousDurations.length - 10, 0)) as item}
                 <div class="prev-duration-item" transition:slide>
                     {item} seconds
                 </div>
@@ -224,7 +235,7 @@
     .prev-duration-wrapper {
         position: absolute;
         width: 200px;
-        top: 200px;
+        top: 130px;
         margin: 20px;
     }
 
